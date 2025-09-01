@@ -1,69 +1,80 @@
- import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+ import React, { createContext, useState, useEffect } from "react";
+import axios from "axios";
 
 const AuthContext = createContext();
 
+// 🔑 Set your backend URL here
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  "https://mini-library-backend.onrender.com/api";
+
 const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
-    token: localStorage.getItem('token'),
+    token: localStorage.getItem("token"),
     isAuthenticated: null,
     user: null,
-    loading: true
+    loading: true,
+  });
+
+  // Configure axios with base URL
+  const api = axios.create({
+    baseURL: API_BASE_URL,
   });
 
   const setAuthData = (data) => {
     if (data) {
-      localStorage.setItem('token', data.token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+      localStorage.setItem("token", data.token);
+      api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
     } else {
-      delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem('token');
+      delete api.defaults.headers.common["Authorization"];
+      localStorage.removeItem("token");
     }
 
     setAuth({
       token: data?.token || null,
       isAuthenticated: !!data,
       user: data?.user || null,
-      loading: false
+      loading: false,
     });
   };
 
   const loadUser = async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
 
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
 
     try {
-      const res = await axios.get('/api/auth/me');
+      const res = await api.get("/auth/me");
       setAuth({
         token,
         isAuthenticated: true,
         user: res.data,
-        loading: false
+        loading: false,
       });
     } catch (err) {
       setAuth({
         token: null,
         isAuthenticated: false,
         user: null,
-        loading: false
+        loading: false,
       });
     }
   };
 
   useEffect(() => {
     loadUser();
+    // eslint-disable-next-line
   }, []);
 
   const login = async (email, password) => {
-    const res = await axios.post('/api/auth/login', { email, password });
+    const res = await api.post("/auth/login", { email, password });
     setAuthData(res.data);
   };
 
   const register = async (formData) => {
-    const res = await axios.post('/api/auth/register', formData);
+    const res = await api.post("/auth/register", formData);
     setAuthData(res.data);
   };
 
@@ -72,10 +83,10 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (formData) => {
-    const res = await axios.put('/api/auth/me', formData);
+    const res = await api.put("/auth/me", formData);
     setAuth({
       ...auth,
-      user: res.data
+      user: res.data,
     });
     return res.data;
   };
@@ -88,7 +99,7 @@ const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
-        loadUser
+        loadUser,
       }}
     >
       {children}
