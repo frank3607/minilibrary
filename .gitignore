@@ -1,0 +1,10 @@
+﻿# Dependency folders
+node_modules/
+
+# Cache
+.cache/
+autolib.git/
+
+# Build outputs
+build/
+dist/
