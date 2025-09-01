@@ -14,8 +14,17 @@ if (!process.env.MONGO_URI) {
 
 const app = express();
 
+// ✅ CORS setup for Vercel + localhost
+app.use(cors({
+  origin: [
+    "https://mini-library-frontend.vercel.app", // frontend on Vercel
+    "http://localhost:3000" // local dev
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 
 // Serve uploaded images statically
