@@ -5,9 +5,13 @@ import axios from "axios";
 const AuthContext = createContext();
 
 // 🔑 Use deployed backend URL
+// 🔑 Detect environment and set API base URL
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  "https://mini-library-backend.onrender.com/api";
+  process.env.REACT_APP_API_URL || // ✅ use Vercel/Render env variable if set
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:5000/api" // local backend
+    : "https://mini-library-backend.onrender.com/api"); // deployed backend
+
 
 const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
