@@ -1,65 +1,46 @@
- // frontend/src/services/bookService.js
-import axios from 'axios';
-
-const API_URL = '/api/books';
+import api from "./api";
 
 const getBooks = async (params) => {
-  const { data } = await axios.get(API_URL, { params });
+  const { data } = await api.get("/api/books", { params });
   return data;
 };
 
-const getBookById = async (bookId, token) => {
-  const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  const { data } = await axios.get(`${API_URL}/${bookId}`, config);
+const getBookById = async (bookId) => {
+  const { data } = await api.get(`/api/books/${bookId}`);
   return data;
 };
 
-const issueBook = async (bookId, token) => {
-  const { data } = await axios.put(`${API_URL}/${bookId}/issue`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
+const issueBook = async (bookId) => {
+  const { data } = await api.put(`/api/books/${bookId}/issue`);
+  return data;
+};
+
+const returnBook = async (bookId) => {
+  const { data } = await api.put(`/api/books/${bookId}/return`);
+  return data;
+};
+
+const rateBook = async (bookId, rating) => {
+  const { data } = await api.post(`/api/books/${bookId}/rate`, { rating });
+  return data;
+};
+
+const addBook = async (formData) => {
+  const { data } = await api.post(`/api/books`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return data;
 };
 
-const returnBook = async (bookId, token) => {
-  const { data } = await axios.put(`${API_URL}/${bookId}/return`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
+const updateBook = async (bookId, formData) => {
+  const { data } = await api.put(`/api/books/${bookId}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return data;
 };
 
-const rateBook = async (bookId, rating, token) => {
-  const { data } = await axios.post(`${API_URL}/${bookId}/rate`, { rating }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return data;
-};
-
-// ✅ FIXED: correct path and field name
-const addBook = async (formData, token) => {
-  const { data } = await axios.post(API_URL, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
-    }
-  });
-  return data;
-};
-
-const updateBook = async (bookId, formData, token) => {
-  const { data } = await axios.put(`${API_URL}/${bookId}`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data'
-    }
-  });
-  return data;
-};
-
-const deleteBook = async (bookId, token) => {
-  const { data } = await axios.delete(`${API_URL}/${bookId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+const deleteBook = async (bookId) => {
+  const { data } = await api.delete(`/api/books/${bookId}`);
   return data;
 };
 
@@ -71,5 +52,5 @@ export default {
   rateBook,
   addBook,
   updateBook,
-  deleteBook
+  deleteBook,
 };
