@@ -1,6 +1,7 @@
  import axios from "axios";
 
-const API_URL = "https://mini-library-backend.onrender.com/api/auth";
+const API_URL ="https://mini-library-backend.onrender.com";
+;
 
 // Register user
 const register = async (userData) => {

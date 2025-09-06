@@ -9,26 +9,31 @@ const API_BASE_URL =
     ? "http://localhost:5000/api"
     : "https://mini-library-backend.onrender.com/api");
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  // ❌ removed withCredentials, since we use JWT not cookies
-});
+// 🔑 Axios instance
+const api = axios.create({ baseURL: API_BASE_URL });
+
+// ✅ Set token immediately if available (prevents race conditions)
+const token = localStorage.getItem("token");
+if (token) {
+  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
 
 const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
-    token: localStorage.getItem("token"),
+    token: token,
     isAuthenticated: null,
     user: null,
     loading: true,
   });
 
+  // 🔑 Helper to set auth state + token
   const setAuthData = (data) => {
     if (data?.token) {
       localStorage.setItem("token", data.token);
       api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
     } else {
-      delete api.defaults.headers.common["Authorization"];
       localStorage.removeItem("token");
+      delete api.defaults.headers.common["Authorization"];
     }
 
     setAuth({
@@ -39,21 +44,23 @@ const AuthProvider = ({ children }) => {
     });
   };
 
+  // 🔑 Load user from token
   const loadUser = async () => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
     }
 
     try {
       const res = await api.get("/auth/me");
       setAuth({
-        token,
+        token: storedToken,
         isAuthenticated: true,
         user: res.data,
         loading: false,
       });
     } catch (err) {
+      console.error("Auth load error:", err.response?.data || err.message);
       setAuth({
         token: null,
         isAuthenticated: false,
@@ -67,14 +74,31 @@ const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
+  // 🔑 Auth actions
   const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    setAuthData(res.data); // ✅ saves token automatically
+    setAuth((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await api.post("/auth/login", { email, password });
+      setAuthData(res.data);
+      return res.data;
+    } catch (err) {
+      console.error("Login error:", err.response?.data || err.message);
+      setAuth((prev) => ({ ...prev, loading: false }));
+      throw err;
+    }
   };
 
   const register = async (formData) => {
-    const res = await api.post("/auth/register", formData);
-    setAuthData(res.data); // ✅ saves token automatically
+    setAuth((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await api.post("/auth/register", formData);
+      setAuthData(res.data);
+      return res.data;
+    } catch (err) {
+      console.error("Register error:", err.response?.data || err.message);
+      setAuth((prev) => ({ ...prev, loading: false }));
+      throw err;
+    }
   };
 
   const logout = () => {
@@ -82,12 +106,18 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (formData) => {
-    const res = await api.put("/auth/me", formData);
-    setAuth({
-      ...auth,
-      user: res.data,
-    });
-    return res.data;
+    try {
+      const res = await api.put("/auth/me", formData);
+      setAuth((prev) => ({
+        ...prev,
+        user: res.data,
+        loading: false,
+      }));
+      return res.data;
+    } catch (err) {
+      console.error("Update profile error:", err.response?.data || err.message);
+      throw err;
+    }
   };
 
   return (
