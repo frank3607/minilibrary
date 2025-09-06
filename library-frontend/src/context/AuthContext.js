@@ -6,8 +6,8 @@ const AuthContext = createContext();
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === "development"
-    ? "http://localhost:5000/api"
-    : "https://mini-library-backend.onrender.com/api");
+    ? "http://localhost:5000/api/auth"
+    : "https://mini-library-backend.onrender.com/api/auth");
 
 // 🔑 Axios instance
 const api = axios.create({ baseURL: API_BASE_URL });
@@ -52,7 +52,7 @@ const AuthProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.get("/auth/me");
+      const res = await api.get("/me"); // ✅ now -> /api/auth/me
       setAuth({
         token: storedToken,
         isAuthenticated: true,
@@ -78,7 +78,7 @@ const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setAuth((prev) => ({ ...prev, loading: true }));
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/login", { email, password }); // ✅ /api/auth/login
       setAuthData(res.data);
       return res.data;
     } catch (err) {
@@ -91,7 +91,7 @@ const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     setAuth((prev) => ({ ...prev, loading: true }));
     try {
-      const res = await api.post("/auth/register", formData);
+      const res = await api.post("/register", formData); // ✅ /api/auth/register
       setAuthData(res.data);
       return res.data;
     } catch (err) {
@@ -107,7 +107,7 @@ const AuthProvider = ({ children }) => {
 
   const updateProfile = async (formData) => {
     try {
-      const res = await api.put("/auth/me", formData);
+      const res = await api.put("/me", formData); // ✅ /api/auth/me
       setAuth((prev) => ({
         ...prev,
         user: res.data,
