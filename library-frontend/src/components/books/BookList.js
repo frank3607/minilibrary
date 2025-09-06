@@ -1,10 +1,9 @@
- // frontend/components/BookList.js
+ // frontend/components/books/BookList.js
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import BookCard from "./BookCard";
-import bookService from "../services/bookService";
+import bookService from "../../services/bookService"; // ✅ FIXED PATH
 import { AuthContext } from "../../context/AuthContext";
-
 
 const BookList = () => {
   const { auth } = useContext(AuthContext);
@@ -28,22 +27,18 @@ const BookList = () => {
   const fetchBooksAndUser = async () => {
     setLoading(true);
     try {
-      // 1️⃣ Fetch books from DB
       let booksData = await bookService.getBooks(token);
 
-      // Filter by search term
       if (searchTerm) {
         booksData = booksData.filter((book) =>
           book.title.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
-      // Filter by category
       if (selectedCategory !== "All") {
         booksData = booksData.filter((book) => book.category === selectedCategory);
       }
 
-      // Ensure avgRating exists
       booksData = booksData.map((book) => ({
         ...book,
         avgRating: Number(book?.avgRating) || 0,
@@ -51,9 +46,8 @@ const BookList = () => {
 
       setBooks(booksData);
 
-      // 2️⃣ Get user's issued book (if logged in)
       if (auth.isAuthenticated && auth.user?.issuedBooks?.length > 0) {
-        setUserIssuedBookId(auth.user.issuedBooks[0]); // Only one issued book allowed
+        setUserIssuedBookId(auth.user.issuedBooks[0]);
       } else {
         setUserIssuedBookId(null);
       }
@@ -66,23 +60,20 @@ const BookList = () => {
     }
   };
 
-  // Fetch books on mount and whenever search/category changes
   useEffect(() => {
     const delay = setTimeout(() => {
       fetchBooksAndUser();
-    }, 300); // debounce
+    }, 300);
     return () => clearTimeout(delay);
     // eslint-disable-next-line
   }, [searchTerm, selectedCategory, auth.user]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Page Title */}
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
         Automobile & Racing Books
       </h1>
 
-      {/* Search + Category */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <input
           type="text"
@@ -112,7 +103,6 @@ const BookList = () => {
         </button>
       </div>
 
-      {/* Book List */}
       {loading ? (
         <div className="flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
