@@ -1,8 +1,9 @@
- import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
 
+// ✅ Correct base URL (points to /api/auth)
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === "development"
@@ -12,7 +13,7 @@ const API_BASE_URL =
 // 🔑 Axios instance
 const api = axios.create({ baseURL: API_BASE_URL });
 
-// ✅ Set token immediately if available (prevents race conditions)
+// ✅ Set token immediately if available
 const token = localStorage.getItem("token");
 if (token) {
   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -52,7 +53,7 @@ const AuthProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.get("/me"); // ✅ now -> /api/auth/me
+      const res = await api.get("/me"); // ✅ now hits /api/auth/me
       setAuth({
         token: storedToken,
         isAuthenticated: true,
