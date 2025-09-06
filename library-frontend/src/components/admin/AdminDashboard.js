@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiBook, FiUsers, FiClock, FiPlusCircle } from "react-icons/fi";
-import axios from "axios";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import api from "../../services/api"; // ✅ use shared api service
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -20,13 +20,17 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("/api/admin/stats", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        if (!token) {
+          console.error("❌ No token found. Please log in as admin.");
+          setLoading(false);
+          return;
+        }
+
+        const res = await api.get("/api/admin/stats");
         setStats(res.data);
-        setLoading(false);
       } catch (err) {
-        console.error(err);
+        console.error("⚠️ Failed to fetch admin stats:", err);
+      } finally {
         setLoading(false);
       }
     };
@@ -36,7 +40,7 @@ const AdminDashboard = () => {
 
   const chartData = [
     { name: "Borrowed Books", value: stats.borrowedBooks },
-    { name: "Available Books", value: stats.totalBooks - stats.borrowedBooks }
+    { name: "Available Books", value: Math.max(0, stats.totalBooks - stats.borrowedBooks) } // ✅ prevent negative
   ];
 
   return (
@@ -94,7 +98,6 @@ const AdminDashboard = () => {
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">Quick Actions</h2>

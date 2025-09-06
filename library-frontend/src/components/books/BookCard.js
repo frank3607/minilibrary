@@ -2,38 +2,59 @@
 import { FiBookOpen } from "react-icons/fi";
 import axios from "axios";
 
-const BookCard = ({ book, onBookUpdate }) => {
+const BookCard = ({ book: initialBook, onBookUpdate }) => {
+  const [book, setBook] = useState(initialBook);
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
-
   const handleIssue = async () => {
+    const token = localStorage.getItem("token");
     if (!token) return alert("Please log in to issue a book.");
     try {
       setLoading(true);
-      await axios.put(`/api/books/${book._id}/issue`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      onBookUpdate(); // refresh book list
+
+      // Optimistic update
+      setBook((prev) => ({ ...prev, isUserIssuedBook: true, isUnavailable: false }));
+
+      await axios.put(
+        `/api/books/${book._id}/issue`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      onBookUpdate?.();
     } catch (err) {
-      console.error(err);
+      console.error("❌ Issue error:", err);
       alert(err.response?.data?.message || "Error issuing book.");
+
+      // Revert optimistic update on failure
+      setBook(initialBook);
     } finally {
       setLoading(false);
     }
   };
 
   const handleReturn = async () => {
+    const token = localStorage.getItem("token");
     if (!token) return alert("Please log in to return a book.");
     try {
       setLoading(true);
-      await axios.put(`/api/books/${book._id}/return`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      onBookUpdate(); // refresh book list
+
+      // Optimistic update
+      setBook((prev) => ({ ...prev, isUserIssuedBook: false, isUnavailable: false }));
+
+      await axios.put(
+        `/api/books/${book._id}/return`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      onBookUpdate?.();
     } catch (err) {
-      console.error(err);
+      console.error("❌ Return error:", err);
       alert(err.response?.data?.message || "Error returning book.");
+
+      // Revert optimistic update on failure
+      setBook(initialBook);
     } finally {
       setLoading(false);
     }
@@ -45,7 +66,9 @@ const BookCard = ({ book, onBookUpdate }) => {
         <button
           onClick={handleReturn}
           disabled={loading}
-          className="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow"
+          className={`absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow ${
+            loading ? "cursor-not-allowed opacity-70" : ""
+          }`}
         >
           {loading ? "Returning..." : "Return"}
         </button>
@@ -62,7 +85,9 @@ const BookCard = ({ book, onBookUpdate }) => {
       <button
         onClick={handleIssue}
         disabled={loading}
-        className="absolute top-2 right-2 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow"
+        className={`absolute top-2 right-2 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow ${
+          loading ? "cursor-not-allowed opacity-70" : ""
+        }`}
       >
         {loading ? "Issuing..." : "Issue"}
       </button>
@@ -83,7 +108,7 @@ const BookCard = ({ book, onBookUpdate }) => {
         {book.coverImage ? (
           <img
             src={book.coverImage}
-            alt={book.title}
+            alt={book.title || "Book cover"}
             className="h-full w-auto object-cover"
           />
         ) : (
@@ -102,7 +127,7 @@ const BookCard = ({ book, onBookUpdate }) => {
         {/* Rating Stars */}
         <div className="flex items-center mt-2">
           {Array.from({ length: 5 }).map((_, index) => (
-            <span key={index}>
+            <span key={index} role="img" aria-label="star">
               {index < Math.round(book.avgRating || 0) ? "⭐" : "☆"}
             </span>
           ))}

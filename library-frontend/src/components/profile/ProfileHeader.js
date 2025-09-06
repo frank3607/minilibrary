@@ -1,34 +1,32 @@
- import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { FiUser, FiEdit, FiSave } from 'react-icons/fi';
+ import React, { useState, useEffect } from "react";
+import { FiUser, FiEdit, FiSave } from "react-icons/fi";
+import authService from "../../services/authService"; // ✅ use service instead of raw axios
 
 const ProfileHeader = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    profilePhoto: ''
+    name: "",
+    email: "",
+    mobile: "",
+    profilePhoto: "",
   });
 
+  // Fetch profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(res.data);
+        const data = await authService.getProfile(); // ✅ use service
+        setUser(data);
         setFormData({
-          name: res.data.name || '',
-          email: res.data.email || '',
-          mobile: res.data.mobile || '',
-          profilePhoto: res.data.profilePhoto || ''
+          name: data.name || "",
+          email: data.email || "",
+          mobile: data.mobile || "",
+          profilePhoto: data.profilePhoto || "",
         });
       } catch (err) {
-        console.error(err);
+        console.error("❌ Error fetching profile:", err);
       } finally {
         setLoading(false);
       }
@@ -43,14 +41,11 @@ const ProfileHeader = () => {
 
   const handleSubmit = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.put('/api/auth/profile', formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(res.data);
+      const updatedUser = await authService.updateProfile(formData); // ✅ use service
+      setUser(updatedUser);
       setIsEditing(false);
     } catch (err) {
-      console.error('Error updating profile:', err);
+      console.error("❌ Error updating profile:", err);
     }
   };
 
@@ -64,22 +59,19 @@ const ProfileHeader = () => {
 
   if (!user) {
     return (
-      <div className="p-6 text-center text-gray-500">
-        Unable to load profile.
-      </div>
+      <div className="p-6 text-center text-gray-500">Unable to load profile.</div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto mt-12 bg-gradient-to-r from-indigo-700 via-indigo-600 to-indigo-800 rounded-xl shadow-lg p-8 text-white">
       <div className="flex flex-col md:flex-row items-center gap-8">
-        
         {/* Profile Image */}
         <div className="relative">
           {user?.profilePhoto ? (
             <img
               src={user.profilePhoto}
-              alt={user.name || 'User'}
+              alt={user.name || "User"}
               className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
             />
           ) : (
@@ -119,13 +111,14 @@ const ProfileHeader = () => {
               className="flex items-center bg-white text-indigo-700 px-3 py-1 rounded-lg hover:bg-gray-100 transition"
             >
               {isEditing ? <FiSave className="mr-1" /> : <FiEdit className="mr-1" />}
-              {isEditing ? 'Save' : 'Edit'}
+              {isEditing ? "Save" : "Edit"}
             </button>
           </div>
 
           <div className="space-y-2">
             <p>
-              <span className="font-medium">Email:</span> {isEditing ? (
+              <span className="font-medium">Email:</span>{" "}
+              {isEditing ? (
                 <input
                   type="email"
                   name="email"
@@ -139,7 +132,8 @@ const ProfileHeader = () => {
             </p>
 
             <p>
-              <span className="font-medium">Mobile:</span> {isEditing ? (
+              <span className="font-medium">Mobile:</span>{" "}
+              {isEditing ? (
                 <input
                   type="tel"
                   name="mobile"
@@ -153,8 +147,10 @@ const ProfileHeader = () => {
             </p>
 
             <p>
-              <span className="font-medium">Member Since:</span>{' '}
-              {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+              <span className="font-medium">Member Since:</span>{" "}
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString()
+                : "N/A"}
             </p>
           </div>
         </div>

@@ -1,7 +1,8 @@
- import React, { useState, useEffect } from 'react';
+ // frontend/src/components/admin/BorrowingHistory.js
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../../services/api'; // ✅ use central API service
 
 const BorrowingHistory = () => {
   const [history, setHistory] = useState([]);
@@ -10,16 +11,11 @@ const BorrowingHistory = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('/api/admin/borrowing-history', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const res = await api.get('/api/admin/borrowing-history'); // ✅ no manual headers
         setHistory(res.data);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching borrowing history:', err);
+      } finally {
         setLoading(false);
       }
     };
@@ -66,7 +62,7 @@ const BorrowingHistory = () => {
                       {/* Book info */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {item.book.coverImage ? (
+                          {item.book?.coverImage ? (
                             <img
                               className="h-10 w-10 rounded-md object-cover"
                               src={item.book.coverImage}
@@ -78,16 +74,16 @@ const BorrowingHistory = () => {
                             </div>
                           )}
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{item.book.title}</div>
-                            <div className="text-sm text-gray-500">{item.book.author}</div>
+                            <div className="text-sm font-medium text-gray-900">{item.book?.title || 'Unknown'}</div>
+                            <div className="text-sm text-gray-500">{item.book?.author || 'Unknown'}</div>
                           </div>
                         </div>
                       </td>
 
                       {/* User info */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{item.user.name}</div>
-                        <div className="text-sm text-gray-500">{item.user.email}</div>
+                        <div className="text-sm text-gray-900">{item.user?.name || 'N/A'}</div>
+                        <div className="text-sm text-gray-500">{item.user?.email || 'N/A'}</div>
                       </td>
 
                       {/* Issue Date */}
