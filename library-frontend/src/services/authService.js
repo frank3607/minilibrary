@@ -1,50 +1,29 @@
- import axios from "axios";
-
-// ✅ Always include /api/auth
-const API_URL = "https://mini-library-backend.onrender.com/api/auth";
+ import api from "./api";
 
 // Register user
 const register = async (userData) => {
-  const response = await axios.post(`${API_URL}/register`, userData);
-  return response.data;
+  const { data } = await api.post("/api/auth/register", userData);
+  if (data?.token) localStorage.setItem("token", data.token);
+  return data;
 };
 
 // Login user
 const login = async (userData) => {
-  const response = await axios.post(`${API_URL}/login`, userData);
-  if (response.data?.token) {
-    localStorage.setItem("token", response.data.token); // ✅ Save token
-  }
-  return response.data;
+  const { data } = await api.post("/api/auth/login", userData);
+  if (data?.token) localStorage.setItem("token", data.token);
+  return data;
 };
 
 // Get user profile
 const getProfile = async () => {
-  const token = localStorage.getItem("token");
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-  const response = await axios.get(`${API_URL}/me`, config);
-  return response.data;
+  const { data } = await api.get("/api/auth/me");
+  return data;
 };
 
 // Update profile
 const updateProfile = async (userData) => {
-  const token = localStorage.getItem("token");
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-  const response = await axios.put(`${API_URL}/me`, userData, config);
-  return response.data;
+  const { data } = await api.put("/api/auth/me", userData);
+  return data;
 };
 
-export default {
-  register,
-  login,
-  getProfile,
-  updateProfile,
-};
+export default { register, login, getProfile, updateProfile };

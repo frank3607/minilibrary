@@ -1,10 +1,14 @@
  // frontend/components/BookList.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import BookCard from "./BookCard";
+import bookService from "../services/bookService";
+import { AuthContext } from "../context/AuthContext";
 
 const BookList = () => {
+  const { auth } = useContext(AuthContext);
+  const token = auth?.token;
+
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,25 +25,24 @@ const BookList = () => {
   ];
 
   const fetchBooksAndUser = async () => {
+    setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      // 1️⃣ Fetch books from DB
+      let booksData = await bookService.getBooks(token);
 
-      // 1️⃣ Fetch books
-      const booksRes = await axios.get("/api/books", {
-        params: {
-          search: searchTerm || undefined,
-          category: selectedCategory === "All" ? undefined : selectedCategory,
-        },
-        headers,
-      });
+      // Filter by search term
+      if (searchTerm) {
+        booksData = booksData.filter((book) =>
+          book.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
 
-      let booksData = Array.isArray(booksRes.data)
-        ? booksRes.data
-        : Array.isArray(booksRes.data.books)
-        ? booksRes.data.books
-        : [];
+      // Filter by category
+      if (selectedCategory !== "All") {
+        booksData = booksData.filter((book) => book.category === selectedCategory);
+      }
 
+      // Ensure avgRating exists
       booksData = booksData.map((book) => ({
         ...book,
         avgRating: Number(book?.avgRating) || 0,
@@ -47,33 +50,29 @@ const BookList = () => {
 
       setBooks(booksData);
 
-      // 2️⃣ Fetch current user’s issued book (if logged in)
-      if (token) {
-        const userRes = await axios.get("/api/auth/me", { headers });
-        if (userRes.data?.issuedBooks?.length > 0) {
-          setUserIssuedBookId(userRes.data.issuedBooks[0]); // Only one issued book allowed
-        } else {
-          setUserIssuedBookId(null);
-        }
+      // 2️⃣ Get user's issued book (if logged in)
+      if (auth.isAuthenticated && auth.user?.issuedBooks?.length > 0) {
+        setUserIssuedBookId(auth.user.issuedBooks[0]); // Only one issued book allowed
+      } else {
+        setUserIssuedBookId(null);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching books or user:", err);
       setBooks([]);
+      setUserIssuedBookId(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // Debounce search/filter
+  // Fetch books on mount and whenever search/category changes
   useEffect(() => {
-    setLoading(true);
-    const delayDebounce = setTimeout(() => {
+    const delay = setTimeout(() => {
       fetchBooksAndUser();
-    }, 500);
-
-    return () => clearTimeout(delayDebounce);
+    }, 300); // debounce
+    return () => clearTimeout(delay);
     // eslint-disable-next-line
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, auth.user]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -82,9 +81,8 @@ const BookList = () => {
         Automobile & Racing Books
       </h1>
 
-      {/* Search + Category + Button */}
+      {/* Search + Category */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-        {/* Search Input */}
         <input
           type="text"
           placeholder="Search books..."
@@ -93,7 +91,6 @@ const BookList = () => {
           className="flex-1 px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
 
-        {/* Category Dropdown */}
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -106,7 +103,6 @@ const BookList = () => {
           ))}
         </select>
 
-        {/* Optional Search Button */}
         <button
           onClick={fetchBooksAndUser}
           className="px-6 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 transition"
@@ -123,16 +119,13 @@ const BookList = () => {
       ) : books.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-xl text-gray-600">No books found</p>
-          <p className="text-gray-500 mt-2">
-            Try adjusting your search or filter
-          </p>
+          <p className="text-gray-500 mt-2">Try adjusting your search or filter</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {books.map((book) => {
             const isUserIssuedBook = userIssuedBookId === book._id;
-            const isUnavailable =
-              book.isIssued && !isUserIssuedBook; // Issued by someone else
+            const isUnavailable = book.isIssued && !isUserIssuedBook;
 
             return (
               <Link
