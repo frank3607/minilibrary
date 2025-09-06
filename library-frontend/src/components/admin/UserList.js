@@ -6,26 +6,37 @@ import axios from 'axios';
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('/api/admin/users', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setUsers(res.data);
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } });
+      setUsers(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  };
+
+  const toggleBlock = async (userId, currentStatus) => {
+    try {
+      setUpdatingId(userId);
+      const token = localStorage.getItem('token');
+      await axios.put(`/api/admin/users/${userId}/block`, { isBlocked: !currentStatus }, { headers: { Authorization: `Bearer ${token}` } });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Error updating user status');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -35,7 +46,7 @@ const UserList = () => {
         </Link>
         <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
       </div>
-      
+
       {loading ? (
         <div className="flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
@@ -46,45 +57,32 @@ const UserList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Books Borrowed
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Books Borrowed</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-                      No users found
-                    </td>
+                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No users found</td>
                   </tr>
                 ) : (
                   users.map((user) => (
                     <tr key={user._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            {user.profilePhoto ? (
-                              <img className="h-10 w-10 rounded-full object-cover" src={user.profilePhoto} alt={user.name} />
-                            ) : (
-                              <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10 flex items-center justify-center text-gray-500">
-                                <FiUser />
-                              </div>
-                            )}
+                      <td className="px-6 py-4 whitespace-nowrap flex items-center">
+                        {user.profilePhoto ? (
+                          <img className="h-10 w-10 rounded-full object-cover" src={user.profilePhoto} alt={user.name} />
+                        ) : (
+                          <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10 flex items-center justify-center text-gray-500">
+                            <FiUser />
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">Joined: {new Date(user.createdAt).toLocaleDateString()}</div>
-                          </div>
+                        )}
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                          <div className="text-sm text-gray-500">Joined: {new Date(user.createdAt).toLocaleDateString()}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -94,12 +92,17 @@ const UserList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           user.role === 'admin' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {user.role}
-                        </span>
+                        }`}>{user.role}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.issuedBooks.length}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.issuedBooks.length}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => toggleBlock(user._id, user.isBlocked)}
+                          disabled={updatingId === user._id}
+                          className={`px-2 py-1 text-xs font-semibold rounded ${user.isBlocked ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} hover:opacity-80`}
+                        >
+                          {updatingId === user._id ? 'Updating...' : user.isBlocked ? 'Unblock' : 'Block'}
+                        </button>
                       </td>
                     </tr>
                   ))

@@ -15,19 +15,13 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
       // Optimistic update
       setBook((prev) => ({ ...prev, isUserIssuedBook: true, isUnavailable: false }));
 
-      await axios.put(
-        `/api/books/${book._id}/issue`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.put(`/api/books/${book._id}/issue`, {}, { headers: { Authorization: `Bearer ${token}` } });
 
       onBookUpdate?.();
     } catch (err) {
       console.error("❌ Issue error:", err);
       alert(err.response?.data?.message || "Error issuing book.");
-
-      // Revert optimistic update on failure
-      setBook(initialBook);
+      setBook(initialBook); // revert
     } finally {
       setLoading(false);
     }
@@ -39,22 +33,15 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
     try {
       setLoading(true);
 
-      // Optimistic update
       setBook((prev) => ({ ...prev, isUserIssuedBook: false, isUnavailable: false }));
 
-      await axios.put(
-        `/api/books/${book._id}/return`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.put(`/api/books/${book._id}/return`, {}, { headers: { Authorization: `Bearer ${token}` } });
 
       onBookUpdate?.();
     } catch (err) {
       console.error("❌ Return error:", err);
       alert(err.response?.data?.message || "Error returning book.");
-
-      // Revert optimistic update on failure
-      setBook(initialBook);
+      setBook(initialBook); // revert
     } finally {
       setLoading(false);
     }
@@ -100,31 +87,21 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
         book.isUnavailable ? "border-red-500" : "border-transparent"
       }`}
     >
-      {/* Status Button */}
       {renderStatusButton()}
 
-      {/* Book Cover */}
       <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
         {book.coverImage ? (
-          <img
-            src={book.coverImage}
-            alt={book.title || "Book cover"}
-            className="h-full w-auto object-cover"
-          />
+          <img src={book.coverImage} alt={book.title || "Book cover"} className="h-full w-auto object-cover" />
         ) : (
           <FiBookOpen className="text-gray-400 text-5xl" />
         )}
       </div>
 
-      {/* Book Info */}
       <div className="p-4">
-        <span className="text-xs font-semibold text-indigo-600 uppercase">
-          {book.category}
-        </span>
+        <span className="text-xs font-semibold text-indigo-600 uppercase">{book.category}</span>
         <h3 className="mt-1 text-lg font-bold text-gray-800">{book.title}</h3>
         <p className="text-gray-600 text-sm">by {book.author}</p>
 
-        {/* Rating Stars */}
         <div className="flex items-center mt-2">
           {Array.from({ length: 5 }).map((_, index) => (
             <span key={index} role="img" aria-label="star">

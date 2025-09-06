@@ -1,4 +1,4 @@
- const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
   {
@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema(
     // ✅ Store references to borrowed books
     issuedBooks: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'Book' }
-    ]
+    ],
+
+    // ✅ Track if user is blocked by admin
+    isBlocked: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

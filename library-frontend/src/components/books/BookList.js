@@ -1,28 +1,18 @@
- // frontend/components/books/BookList.js
-import React, { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
+ import React, { useState, useEffect, useContext } from "react";
 import BookCard from "./BookCard";
-import bookService from "../../services/bookService"; // ✅ FIXED PATH
+import bookService from "../../services/bookService";
 import { AuthContext } from "../../context/AuthContext";
 
 const BookList = () => {
-  const { auth } = useContext(AuthContext);
+  const { auth, updateAuthUser } = useContext(AuthContext);
   const token = auth?.token;
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [userIssuedBookId, setUserIssuedBookId] = useState(null);
 
-  const categories = [
-    "All",
-    "F1 Racing",
-    "Motorsports",
-    "Vintage Cars",
-    "Motorbikes",
-    "Automotive Engineering",
-  ];
+  const categories = ["All", "F1 Racing", "Motorsports", "Vintage Cars", "Motorbikes", "Automotive Engineering"];
 
   const fetchBooksAndUser = async () => {
     setLoading(true);
@@ -44,17 +34,18 @@ const BookList = () => {
         avgRating: Number(book?.avgRating) || 0,
       }));
 
-      setBooks(booksData);
+      // Determine which books the user has issued
+      let userIssuedBooks = auth.user?.issuedBooks || [];
+      const updatedBooks = booksData.map((book) => ({
+        ...book,
+        isUserIssuedBook: userIssuedBooks.includes(book._id),
+        isUnavailable: book.isIssued && !userIssuedBooks.includes(book._id),
+      }));
 
-      if (auth.isAuthenticated && auth.user?.issuedBooks?.length > 0) {
-        setUserIssuedBookId(auth.user.issuedBooks[0]);
-      } else {
-        setUserIssuedBookId(null);
-      }
+      setBooks(updatedBooks);
     } catch (err) {
-      console.error("Error fetching books or user:", err);
+      console.error("Error fetching books:", err);
       setBooks([]);
-      setUserIssuedBookId(null);
     } finally {
       setLoading(false);
     }
@@ -65,14 +56,11 @@ const BookList = () => {
       fetchBooksAndUser();
     }, 300);
     return () => clearTimeout(delay);
-    // eslint-disable-next-line
   }, [searchTerm, selectedCategory, auth.user]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Automobile & Racing Books
-      </h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Automobile & Racing Books</h1>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <input
@@ -89,9 +77,7 @@ const BookList = () => {
           className="px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
+            <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
 
@@ -114,26 +100,9 @@ const BookList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {books.map((book) => {
-            const isUserIssuedBook = userIssuedBookId === book._id;
-            const isUnavailable = book.isIssued && !isUserIssuedBook;
-
-            return (
-              <Link
-                to={`/books/${book._id}`}
-                key={book._id}
-                className="hover:scale-105 transition transform"
-              >
-                <BookCard
-                  book={{
-                    ...book,
-                    isUnavailable,
-                    isUserIssuedBook,
-                  }}
-                />
-              </Link>
-            );
-          })}
+          {books.map((book) => (
+            <BookCard key={book._id} book={book} onBookUpdate={fetchBooksAndUser} />
+          ))}
         </div>
       )}
     </div>
