@@ -1,4 +1,4 @@
- import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -46,6 +46,7 @@ const AuthProvider = ({ children }) => {
     }
 
     try {
+      // ✅ Correct endpoint
       const res = await api.get("/auth/me");
       setAuth({
         token,
@@ -69,11 +70,13 @@ const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    // ✅ Correct endpoint
     const res = await api.post("/auth/login", { email, password });
     setAuthData(res.data);
   };
 
   const register = async (formData) => {
+    // ✅ Correct endpoint
     const res = await api.post("/auth/register", formData);
     setAuthData(res.data);
   };
@@ -83,6 +86,7 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (formData) => {
+    // ✅ Correct endpoint
     const res = await api.put("/auth/me", formData);
     setAuth({
       ...auth,
