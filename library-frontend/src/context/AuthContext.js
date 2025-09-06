@@ -1,14 +1,11 @@
-import React, { createContext, useState, useEffect } from "react";
+ import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
 
-// ✅ Correct base URL (points to /api/auth)
+// ✅ Base URL from .env or fallback
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:5000/api/auth"
-    : "https://mini-library-backend.onrender.com/api/auth");
+  process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 // 🔑 Axios instance
 const api = axios.create({ baseURL: API_BASE_URL });
@@ -53,7 +50,8 @@ const AuthProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.get("/me"); // ✅ now hits /api/auth/me
+      // ✅ fixed: must hit /api/auth/me
+      const res = await api.get("/api/auth/me");
       setAuth({
         token: storedToken,
         isAuthenticated: true,
@@ -79,7 +77,7 @@ const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setAuth((prev) => ({ ...prev, loading: true }));
     try {
-      const res = await api.post("/login", { email, password }); // ✅ /api/auth/login
+      const res = await api.post("/api/auth/login", { email, password });
       setAuthData(res.data);
       return res.data;
     } catch (err) {
@@ -92,7 +90,7 @@ const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     setAuth((prev) => ({ ...prev, loading: true }));
     try {
-      const res = await api.post("/register", formData); // ✅ /api/auth/register
+      const res = await api.post("/api/auth/register", formData);
       setAuthData(res.data);
       return res.data;
     } catch (err) {
@@ -108,7 +106,7 @@ const AuthProvider = ({ children }) => {
 
   const updateProfile = async (formData) => {
     try {
-      const res = await api.put("/me", formData); // ✅ /api/auth/me
+      const res = await api.put("/api/auth/me", formData);
       setAuth((prev) => ({
         ...prev,
         user: res.data,
