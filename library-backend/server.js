@@ -18,7 +18,7 @@ const app = express();
 // ✅ CORS setup for Vercel + localhost
 app.use(cors({
   origin: [
-    "https://mini-library-tawny.vercel.app", // old frontend URL
+     "https://minilibrary-tawny.vercel.app",// old frontend URL
     "https://minilibrary-git-main-frank3607s-projects.vercel.app", // ✅ your deployed frontend
     "http://localhost:3000" // local dev
   ],

@@ -1,5 +1,6 @@
  import axios from "axios";
-import API_URL from "../config";  // import the backend URL
+
+const API_URL = "https://mini-library-backend.onrender.com/api/auth";
 
 // Register user
 const register = async (userData) => {
@@ -10,11 +11,15 @@ const register = async (userData) => {
 // Login user
 const login = async (userData) => {
   const response = await axios.post(`${API_URL}/login`, userData);
+  if (response.data?.token) {
+    localStorage.setItem("token", response.data.token); // ✅ Save token
+  }
   return response.data;
 };
 
 // Get user profile
-const getProfile = async (token) => {
+const getProfile = async () => {
+  const token = localStorage.getItem("token");
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -25,7 +30,8 @@ const getProfile = async (token) => {
 };
 
 // Update profile
-const updateProfile = async (userData, token) => {
+const updateProfile = async (userData) => {
+  const token = localStorage.getItem("token");
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,

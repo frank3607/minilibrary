@@ -1,17 +1,18 @@
- // src/context/AuthContext.js
-import React, { createContext, useState, useEffect } from "react";
+ import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
 
-// 🔑 Use deployed backend URL
-// 🔑 Detect environment and set API base URL
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || // ✅ use Vercel/Render env variable if set
+  process.env.REACT_APP_API_URL ||
   (process.env.NODE_ENV === "development"
-    ? "http://localhost:5000/api" // local backend
-    : "https://mini-library-backend.onrender.com/api"); // deployed backend
+    ? "http://localhost:5000/api"
+    : "https://mini-library-backend.onrender.com/api");
 
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  // ❌ removed withCredentials, since we use JWT not cookies
+});
 
 const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
@@ -21,13 +22,6 @@ const AuthProvider = ({ children }) => {
     loading: true,
   });
 
-  // Axios instance with base URL
-  const api = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true, // ensures cookies are sent if using them
-  });
-
-  // Set or clear auth data
   const setAuthData = (data) => {
     if (data?.token) {
       localStorage.setItem("token", data.token);
@@ -39,13 +33,12 @@ const AuthProvider = ({ children }) => {
 
     setAuth({
       token: data?.token || null,
-      isAuthenticated: !!data,
+      isAuthenticated: !!data?.token,
       user: data?.user || null,
       loading: false,
     });
   };
 
-  // Load user on mount
   const loadUser = async () => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -72,18 +65,16 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     loadUser();
-    // eslint-disable-next-line
   }, []);
 
-  // Auth actions
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
-    setAuthData(res.data);
+    setAuthData(res.data); // ✅ saves token automatically
   };
 
   const register = async (formData) => {
     const res = await api.post("/auth/register", formData);
-    setAuthData(res.data);
+    setAuthData(res.data); // ✅ saves token automatically
   };
 
   const logout = () => {
