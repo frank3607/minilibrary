@@ -1,9 +1,10 @@
+ // src/context/AuthContext.js
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
 
-// 🔑 Set your backend URL here
+// 🔑 Use deployed backend URL
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
   "https://mini-library-backend.onrender.com/api";
@@ -16,13 +17,15 @@ const AuthProvider = ({ children }) => {
     loading: true,
   });
 
-  // Configure axios with base URL
+  // Axios instance with base URL
   const api = axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true, // ensures cookies are sent if using them
   });
 
+  // Set or clear auth data
   const setAuthData = (data) => {
-    if (data) {
+    if (data?.token) {
       localStorage.setItem("token", data.token);
       api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
     } else {
@@ -38,15 +41,14 @@ const AuthProvider = ({ children }) => {
     });
   };
 
+  // Load user on mount
   const loadUser = async () => {
     const token = localStorage.getItem("token");
-
     if (token) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
 
     try {
-      // ✅ Correct endpoint
       const res = await api.get("/auth/me");
       setAuth({
         token,
@@ -69,14 +71,13 @@ const AuthProvider = ({ children }) => {
     // eslint-disable-next-line
   }, []);
 
+  // Auth actions
   const login = async (email, password) => {
-    // ✅ Correct endpoint
     const res = await api.post("/auth/login", { email, password });
     setAuthData(res.data);
   };
 
   const register = async (formData) => {
-    // ✅ Correct endpoint
     const res = await api.post("/auth/register", formData);
     setAuthData(res.data);
   };
@@ -86,7 +87,6 @@ const AuthProvider = ({ children }) => {
   };
 
   const updateProfile = async (formData) => {
-    // ✅ Correct endpoint
     const res = await api.put("/auth/me", formData);
     setAuth({
       ...auth,
