@@ -1,6 +1,5 @@
- import axios from 'axios';
-
-const API_URL = '/api/auth';
+ import axios from "axios";
+import API_URL from "../config";  // import the backend URL
 
 // Register user
 const register = async (userData) => {
@@ -18,11 +17,9 @@ const login = async (userData) => {
 const getProfile = async (token) => {
   const config = {
     headers: {
-      Authorization: `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   };
-  
-  // Changed /profile → /me
   const response = await axios.get(`${API_URL}/me`, config);
   return response.data;
 };
@@ -31,11 +28,9 @@ const getProfile = async (token) => {
 const updateProfile = async (userData, token) => {
   const config = {
     headers: {
-      Authorization: `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   };
-  
-  // This should also match backend — if you don’t have PUT /me, add it in backend
   const response = await axios.put(`${API_URL}/me`, userData, config);
   return response.data;
 };
@@ -44,5 +39,5 @@ export default {
   register,
   login,
   getProfile,
-  updateProfile
+  updateProfile,
 };
