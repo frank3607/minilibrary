@@ -6,6 +6,10 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
   const [book, setBook] = useState(initialBook);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Use backend URL (from .env or fallback to Render)
+  const API_BASE_URL =
+    process.env.REACT_APP_API_URL || "https://mini-library-backend.onrender.com";
+
   const handleIssue = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("Please log in to issue a book.");
@@ -13,9 +17,17 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
       setLoading(true);
 
       // Optimistic update
-      setBook((prev) => ({ ...prev, isUserIssuedBook: true, isUnavailable: false }));
+      setBook((prev) => ({
+        ...prev,
+        isUserIssuedBook: true,
+        isUnavailable: false,
+      }));
 
-      await axios.put(`/api/books/${book._id}/issue`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(
+        `${API_BASE_URL}/api/books/${book._id}/issue`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       onBookUpdate?.();
     } catch (err) {
@@ -33,9 +45,17 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
     try {
       setLoading(true);
 
-      setBook((prev) => ({ ...prev, isUserIssuedBook: false, isUnavailable: false }));
+      setBook((prev) => ({
+        ...prev,
+        isUserIssuedBook: false,
+        isUnavailable: false,
+      }));
 
-      await axios.put(`/api/books/${book._id}/return`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(
+        `${API_BASE_URL}/api/books/${book._id}/return`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       onBookUpdate?.();
     } catch (err) {
@@ -91,14 +111,20 @@ const BookCard = ({ book: initialBook, onBookUpdate }) => {
 
       <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
         {book.coverImage ? (
-          <img src={book.coverImage} alt={book.title || "Book cover"} className="h-full w-auto object-cover" />
+          <img
+            src={book.coverImage}
+            alt={book.title || "Book cover"}
+            className="h-full w-auto object-cover"
+          />
         ) : (
           <FiBookOpen className="text-gray-400 text-5xl" />
         )}
       </div>
 
       <div className="p-4">
-        <span className="text-xs font-semibold text-indigo-600 uppercase">{book.category}</span>
+        <span className="text-xs font-semibold text-indigo-600 uppercase">
+          {book.category}
+        </span>
         <h3 className="mt-1 text-lg font-bold text-gray-800">{book.title}</h3>
         <p className="text-gray-600 text-sm">by {book.author}</p>
 

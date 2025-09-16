@@ -1,8 +1,7 @@
- // frontend/src/components/admin/BorrowingHistory.js
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import api from '../../services/api'; // ✅ use central API service
+import api from '../../services/api';
 
 const BorrowingHistory = () => {
   const [history, setHistory] = useState([]);
@@ -11,10 +10,19 @@ const BorrowingHistory = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await api.get('/api/admin/borrowing-history'); // ✅ no manual headers
-        setHistory(res.data);
+        const res = await api.get('/api/admin/borrowing-history');
+        console.log("Fetched borrowing history:", res.data);
+
+        if (Array.isArray(res.data)) {
+          setHistory(res.data);
+        } else if (Array.isArray(res.data.history)) {
+          setHistory(res.data.history);
+        } else {
+          setHistory([]);
+        }
       } catch (err) {
         console.error('Error fetching borrowing history:', err);
+        setHistory([]);
       } finally {
         setLoading(false);
       }
@@ -59,7 +67,6 @@ const BorrowingHistory = () => {
                 ) : (
                   history.map((item) => (
                     <tr key={item._id} className="hover:bg-gray-50">
-                      {/* Book info */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           {item.book?.coverImage ? (
@@ -79,24 +86,16 @@ const BorrowingHistory = () => {
                           </div>
                         </div>
                       </td>
-
-                      {/* User info */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{item.user?.name || 'N/A'}</div>
                         <div className="text-sm text-gray-500">{item.user?.email || 'N/A'}</div>
                       </td>
-
-                      {/* Issue Date */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {item.issueDate ? new Date(item.issueDate).toLocaleDateString() : '-'}
                       </td>
-
-                      {/* Return Date */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {item.returnDate ? new Date(item.returnDate).toLocaleDateString() : 'Not returned'}
                       </td>
-
-                      {/* Status */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
