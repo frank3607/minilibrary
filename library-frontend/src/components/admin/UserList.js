@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiUser, FiArrowLeft } from 'react-icons/fi';
 import axios from 'axios';
@@ -8,6 +8,9 @@ const UserList = () => {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
 
+  // ✅ Use environment variable (falls back to Render backend if not set)
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "https://mini-library-backend.onrender.com";
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -15,13 +18,14 @@ const UserList = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/admin/users', { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
+      const res = await axios.get(
+        `${API_BASE_URL}/api/admin/users`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       console.log("Fetched users:", res.data);
 
-      // ✅ Ensure we always store an array in `users`
+      // ✅ Always ensure we set an array
       if (Array.isArray(res.data)) {
         setUsers(res.data);
       } else if (Array.isArray(res.data.users)) {
@@ -32,7 +36,7 @@ const UserList = () => {
 
       setLoading(false);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching users:", err);
       setLoading(false);
     }
   };
@@ -42,8 +46,8 @@ const UserList = () => {
       setUpdatingId(userId);
       const token = localStorage.getItem('token');
       await axios.put(
-        `/api/admin/users/${userId}/block`, 
-        { isBlocked: !currentStatus }, 
+        `${API_BASE_URL}/api/admin/users/${userId}/block`,
+        { isBlocked: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchUsers();
@@ -58,8 +62,8 @@ const UserList = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center mb-6">
-        <Link 
-          to="/admin" 
+        <Link
+          to="/admin"
           className="flex items-center text-indigo-600 hover:text-indigo-800 mr-4"
         >
           <FiArrowLeft className="mr-1" /> Back to Dashboard
@@ -90,10 +94,10 @@ const UserList = () => {
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap flex items-center">
                         {user.profilePhoto ? (
-                          <img 
-                            className="h-10 w-10 rounded-full object-cover" 
-                            src={user.profilePhoto} 
-                            alt={user.name} 
+                          <img
+                            className="h-10 w-10 rounded-full object-cover"
+                            src={user.profilePhoto}
+                            alt={user.name}
                           />
                         ) : (
                           <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10 flex items-center justify-center text-gray-500">
@@ -112,10 +116,10 @@ const UserList = () => {
                         <div className="text-sm text-gray-500">{user.mobile}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span 
+                        <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === 'admin' 
-                              ? 'bg-green-100 text-green-800' 
+                            user.role === 'admin'
+                              ? 'bg-green-100 text-green-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
@@ -130,24 +134,24 @@ const UserList = () => {
                           onClick={() => toggleBlock(user._id, user.isBlocked)}
                           disabled={updatingId === user._id}
                           className={`px-2 py-1 text-xs font-semibold rounded ${
-                            user.isBlocked 
-                              ? 'bg-green-100 text-green-800' 
+                            user.isBlocked
+                              ? 'bg-green-100 text-green-800'
                               : 'bg-red-100 text-red-800'
                           } hover:opacity-80`}
                         >
-                          {updatingId === user._id 
-                            ? 'Updating...' 
-                            : user.isBlocked 
-                              ? 'Unblock' 
-                              : 'Block'}
+                          {updatingId === user._id
+                            ? 'Updating...'
+                            : user.isBlocked
+                            ? 'Unblock'
+                            : 'Block'}
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td 
-                      colSpan="5" 
+                    <td
+                      colSpan="5"
                       className="px-6 py-4 text-center text-gray-500"
                     >
                       No users found
